@@ -1,78 +1,501 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Digit Recognizer</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Digit Recognizer</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { background: #222; color: white; text-align: center; font-family: Arial; }
-        canvas { border: 2px solid white; background: black; cursor: crosshair; }
-        #result { margin-top: 20px; font-size: 24px; }
-        button { margin: 10px; padding: 10px 20px; font-size: 18px; }
+        :root {
+            --primary: #4e54c8;
+            --primary-dark: #3f43a7;
+            --secondary: #ff6b6b;
+            --dark: #222;
+            --light: #f8f9fa;
+            --gray: #6c757d;
+            --success: #28a745;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(to right, #4e54c8, #8f94fb);
+            color: var(--light);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .container {
+            max-width: 1200px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            width: 100%;
+        }
+        
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .content {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 30px;
+            width: 100%;
+        }
+        
+        .drawing-section {
+            flex: 1;
+            min-width: 350px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+        
+        .result-section {
+            flex: 1;
+            min-width: 350px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+        
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            text-align: center;
+            color: #ffdd40;
+        }
+        
+        canvas {
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 15px;
+            background-color: black;
+            cursor: crosshair;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+        }
+        
+        .buttons {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        button {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .predict-btn {
+            background: linear-gradient(to right, #ff416c, #ff4b2b);
+            color: white;
+        }
+        
+        .clear-btn {
+            background: linear-gradient(to right, #1e3c72, #2a5298);
+            color: white;
+        }
+        
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        .prediction-result {
+            text-align: center;
+            margin-top: 20px;
+            width: 100%;
+        }
+        
+        .digit {
+            font-size: 5rem;
+            font-weight: bold;
+            color: #ffdd40;
+            margin: 20px 0;
+            text-shadow: 0 0 10px rgba(255, 221, 64, 0.5);
+        }
+        
+        .confidence {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+        
+        .progress {
+            height: 100%;
+            background: linear-gradient(to right, #00b09b, #96c93d);
+            border-radius: 10px;
+            transition: width 0.5s ease;
+        }
+        
+        .top-predictions {
+            width: 100%;
+            margin-top: 20px;
+        }
+        
+        .prediction-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px 15px;
+            border-radius: 10px;
+        }
+        
+        .prediction-digit {
+            font-size: 1.8rem;
+            font-weight: bold;
+            width: 50px;
+            text-align: center;
+            color: #ffdd40;
+        }
+        
+        .prediction-bar-container {
+            flex-grow: 1;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 0 15px;
+        }
+        
+        .prediction-bar {
+            height: 100%;
+            background: linear-gradient(to right, #ff9966, #ff5e62);
+            border-radius: 10px;
+            transition: width 0.5s ease;
+        }
+        
+        .prediction-percent {
+            font-size: 1.1rem;
+            width: 70px;
+            text-align: right;
+        }
+        
+        .instructions {
+            margin-top: 30px;
+            text-align: center;
+            max-width: 600px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 15px;
+        }
+        
+        .instructions h3 {
+            margin-bottom: 15px;
+            color: #ffdd40;
+        }
+        
+        .instructions ul {
+            text-align: left;
+            list-style-type: none;
+        }
+        
+        .instructions li {
+            margin-bottom: 10px;
+            padding-left: 25px;
+            position: relative;
+        }
+        
+        .instructions li:before {
+            content: "•";
+            color: #ffdd40;
+            font-size: 1.5rem;
+            position: absolute;
+            left: 0;
+            top: -5px;
+        }
+        
+        footer {
+            margin-top: 40px;
+            text-align: center;
+            opacity: 0.8;
+        }
+        
+        .loading {
+            display: none;
+            margin-top: 20px;
+        }
+        
+        .loading-spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid #ffdd40;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @media (max-width: 768px) {
+            .content {
+                flex-direction: column;
+            }
+            
+            h1 {
+                font-size: 2.2rem;
+            }
+        }
     </style>
 </head>
 <body>
-    <h1>Draw a Digit (0-9)</h1>
-    <canvas id="canvas" width="280" height="280"></canvas><br>
-    <button onclick="clearCanvas()">Clear</button>
-    <button onclick="predict()">Predict</button>
-    <div id="result">Prediction: ?</div>
+    <div class="container">
+        <header>
+            <h1>Handwriting Digit Analyzer</h1>
+            <p class="subtitle">Draw a digit from 0 to 9 and see how accurately our AI model can recognize it</p>
+        </header>
+        
+        <div class="content">
+            <div class="drawing-section">
+                <h2 class="section-title">Draw Your Digit Here</h2>
+                <canvas id="canvas" width="280" height="280"></canvas>
+                
+                <div class="buttons">
+                    <button class="predict-btn" onclick="predict()">
+                        <i class="fas fa-brain"></i> Predict Digit
+                    </button>
+                    <button class="clear-btn" onclick="clearCanvas()">
+                        <i class="fas fa-broom"></i> Clear Canvas
+                    </button>
+                </div>
+                
+                <div class="loading" id="loading">
+                    <div class="loading-spinner"></div>
+                    <p>Analyzing your digit...</p>
+                </div>
+                
+                <div class="instructions">
+                    <h3>How to use:</h3>
+                    <ul>
+                        <li>Draw a single digit (0-9) in the center of the canvas</li>
+                        <li>Make the digit as clear as possible for better accuracy</li>
+                        <li>Click "Predict Digit" to analyze your handwriting</li>
+                        <li>Use "Clear Canvas" to start over</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="result-section">
+                <h2 class="section-title">Prediction Results</h2>
+                
+                <div class="prediction-result">
+                    <p>Current Prediction:</p>
+                    <div class="digit" id="predicted-digit">?</div>
+                    <p class="confidence">Confidence: <span id="confidence-value">0%</span></p>
+                    <div class="progress-bar">
+                        <div class="progress" id="confidence-bar" style="width: 0%"></div>
+                    </div>
+                </div>
+                
+                <div class="top-predictions">
+                    <h3>Top Predictions</h3>
+                    <div id="predictions-list">
+                        <!-- Will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>Powered by PyTorch CNN Model & Flask Backend</p>
+        </footer>
+    </div>
 
     <script>
+        // Initialize canvas
         const canvas = document.getElementById("canvas");
         const ctx = canvas.getContext("2d");
-
+        
+        // Set initial canvas background
         ctx.fillStyle = "black";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-
+        
+        // Drawing settings
         ctx.strokeStyle = "white";
         ctx.lineWidth = 20;
         ctx.lineCap = "round";
-
+        ctx.lineJoin = "round";
+        
         let drawing = false;
-
-        canvas.addEventListener("mousedown", (e) => {
+        
+        // Mouse events
+        canvas.addEventListener("mousedown", startDrawing);
+        canvas.addEventListener("mousemove", draw);
+        canvas.addEventListener("mouseup", stopDrawing);
+        canvas.addEventListener("mouseleave", stopDrawing);
+        
+        // Touch events for mobile devices
+        canvas.addEventListener("touchstart", function(e) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const mouseEvent = new MouseEvent("mousedown", {
+                clientX: touch.clientX,
+                clientY: touch.clientY
+            });
+            canvas.dispatchEvent(mouseEvent);
+        });
+        
+        canvas.addEventListener("touchmove", function(e) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const mouseEvent = new MouseEvent("mousemove", {
+                clientX: touch.clientX,
+                clientY: touch.clientY
+            });
+            canvas.dispatchEvent(mouseEvent);
+        });
+        
+        canvas.addEventListener("touchend", function(e) {
+            e.preventDefault();
+            const mouseEvent = new MouseEvent("mouseup");
+            canvas.dispatchEvent(mouseEvent);
+        });
+        
+        function startDrawing(e) {
             drawing = true;
             ctx.beginPath(); 
             ctx.moveTo(e.offsetX, e.offsetY);
-        });
-
-        canvas.addEventListener("mousemove", (e) => {
+        }
+        
+        function draw(e) {
             if (!drawing) return;
             ctx.lineTo(e.offsetX, e.offsetY);
             ctx.stroke();
-        });
-
-        canvas.addEventListener("mouseup", () => {
-            drawing = false;
-            ctx.closePath(); 
-        });
-
-        canvas.addEventListener("mouseleave", () => {
+        }
+        
+        function stopDrawing() {
             drawing = false;
             ctx.closePath();
-        });
-
+        }
+        
         function clearCanvas() {
             ctx.fillStyle = "black";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            document.getElementById("predicted-digit").textContent = "?";
+            document.getElementById("confidence-value").textContent = "0%";
+            document.getElementById("confidence-bar").style.width = "0%";
+            
+            document.getElementById("predictions-list").innerHTML = "";
+
+            document.getElementById("loading").style.display = "none";
         }
+        
+        function predict() {
+            document.getElementById("loading").style.display = "block";
+        
+            let dataURL = canvas.toDataURL("image/png");
+            
+            fetch("/predict", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ image: dataURL })
+            })
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById("loading").style.display = "none";
 
-       function predict() {
-        let dataURL = canvas.toDataURL("image/png");
-        fetch("/predict", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ image: dataURL })
-        })
-        .then(res => res.json())
-        .then(data => {
-            let resultDiv = document.getElementById("result");
-            resultDiv.innerHTML = "Top Predictions:<br>";
-            data.predictions.forEach(p => {
-                resultDiv.innerHTML += `${p.digit} (${p.confidence}%)<br>`;
+                displayPredictions(data.predictions);
+            })
+            .catch(error => {
+                console.error("Error:", error);
+                document.getElementById("loading").style.display = "none";
+                alert("Error communicating with the server. Please try again.");
             });
-        });
-    }
+        }
+        
+        function displayPredictions(predictions) {
+            const predictionsList = document.getElementById("predictions-list");
+            predictionsList.innerHTML = "";
 
+            predictions.sort((a, b) => b.confidence - a.confidence);
+
+            const topPrediction = predictions[0];
+            document.getElementById("predicted-digit").textContent = topPrediction.digit;
+            document.getElementById("confidence-value").textContent = `${topPrediction.confidence}%`;
+            document.getElementById("confidence-bar").style.width = `${topPrediction.confidence}%`;
+    
+            predictions.forEach(p => {
+                const predictionItem = document.createElement("div");
+                predictionItem.className = "prediction-item";
+                
+                predictionItem.innerHTML = `
+                    <div class="prediction-digit">${p.digit}</div>
+                    <div class="prediction-bar-container">
+                        <div class="prediction-bar" style="width: ${p.confidence}%"></div>
+                    </div>
+                    <div class="prediction-percent">${p.confidence}%</div>
+                `;
+                
+                predictionsList.appendChild(predictionItem);
+            });
+        }
+    
+        window.onload = function() {
+            clearCanvas();
+        };
     </script>
 </body>
 </html>
